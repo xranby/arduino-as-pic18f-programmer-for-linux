@@ -34,6 +34,7 @@ class Hex:
         self.offset = 0
         self.fuseValue = [0] * 0xF
         self.fuseStatus = [0] * 0xF
+        self.fuseMask = [0] * 0xF
 
         fileSize = int(os.path.getsize(fileName))
         hexFile = open(fileName, 'r')
@@ -49,6 +50,40 @@ class Hex:
             self.haveid = 0
         for i in range(0x0F):
             self.fuseStatus[i] = 0
+
+        # Fuse values default unprogrammed value
+        # 39622L page 29
+        self.fuseValue[0] = int('00000000', 2)
+        self.fuseValue[1] = int('00000101', 2) # TODO Unprogrammed value differ for PIC18F2455/2550/4455/4550 and PIC18F2458/2553/4458/4553 devices
+        self.fuseValue[2] = int('00011111', 2)
+        self.fuseValue[3] = int('00011111', 2)
+        self.fuseValue[4] = int('00000000', 2)
+        self.fuseValue[5] = int('10000011', 2)
+        self.fuseValue[6] = int('10000101', 2)
+        self.fuseValue[7] = int('00000000', 2)
+        self.fuseValue[8] = int('00111111', 2)
+        self.fuseValue[9] = int('11000000', 2)
+        self.fuseValue[10] = int('00111111', 2)
+        self.fuseValue[11] = int('11100000', 2)
+        self.fuseValue[12] = int('00111111', 2)
+        self.fuseValue[13] = int('01000000', 2)
+
+        # Unimplemented fuse bits will read as 0
+        # 39622L page 29
+        self.fuseMask[0] = int('00111111', 2)
+        self.fuseMask[1] = int('11001111', 2)
+        self.fuseMask[2] = int('00111111', 2)
+        self.fuseMask[3] = int('00011111', 2)
+        self.fuseMask[4] = int('00000000', 2)
+        self.fuseMask[5] = int('10000111', 2) # TODO Mask differ for PIC18F2455/2550/4455/4550 and PIC18F2458/2553/4458/4553 devices
+        self.fuseMask[6] = int('11000101', 2) # TODO Mask differ for PIC18F2455/2550/4455/4550 and PIC18F2458/2553/4458/4553 devices
+        self.fuseMask[7] = int('00000000', 2)
+        self.fuseMask[8] = int('00001111', 2) # TODO Mask differ for PIC18F2455/2550/4455/4550 and PIC18F2458/2553/4458/4553 devices
+        self.fuseMask[9] = int('11000000', 2)
+        self.fuseMask[10] = int('00001111', 2) # TODO Mask differ for PIC18F2455/2550/4455/4550 and PIC18F2458/2553/4458/4553 devices
+        self.fuseMask[11] = int('11100000', 2)
+        self.fuseMask[12] = int('00001111', 2) # TODO Mask differ for PIC18F2455/2550/4455/4550 and PIC18F2458/2553/4458/4553 devices
+        self.fuseMask[13] = int('01000000', 2)
 
         while True:
             buf = hexFile.readline(128).translate(None, ':\n')
@@ -82,6 +117,9 @@ class Hex:
 
     def getFuse(self, fuseID):
         return self.fuseValue[fuseID]
+
+    def getFuseMask(self, fuseID):
+        return self.fuseMask[fuseID]
 
     # HEX parser
     def reformat(self, hexData):

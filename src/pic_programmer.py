@@ -185,7 +185,7 @@ def main():
                         address += 0x20
 
                     print "\tSuccess"
-
+                    """
                     # verify Program
                     print "Verify flash memory...",
                     verification = 1
@@ -232,7 +232,7 @@ def main():
                         print "\tFailed"
                     else:
                         print "\tSuccess"
-
+                    """
                     # verify IDs
                     print "Verify ID memory...",
                     verification = 1
@@ -354,7 +354,51 @@ def main():
                     print "\tSuccess"
 
                     # verify configuration bits
-                    # TODO
+                    print "Verify the fuse bits...",
+                    verification = 1
+                    if verbose:
+                        print "\n",
+                    # Send read command
+                    buf = "R"
+                    buf += str(hex(0x300000)[2:].zfill(6))
+                    buf += "X"
+                    arduino.flushInput()
+                    arduino.write((buf).upper())
+                    arduino.read()
+
+                    # Receive data
+                    buf = ""
+                    r = arduino.read()
+                    while r != "X":
+                        buf += r
+                        r = arduino.read()
+                    buf += r
+
+                    if verbose:
+                        print buf
+                    # Compare
+                    c = buf[:1]
+                    if c == "K":
+                        #workaround python serial bug... K received twice!
+                        # remove R
+                        buf = buf[1:]
+                        c = buf[:1]
+                    if c != "R":
+                        print "abort; wrong command received from arduino"
+                        return 1
+                    # remove R
+                    buf = buf[1:]
+
+                    iAddress, buf = int(buf[:6], 16), buf[6:]
+                    for j in range(0xF):
+                        data, buf = int(buf[:2], 16), buf[2:]
+                        if (hexFile.getFuse(iAddress - 0x300000 + j) & hexFile.getFuseMask(iAddress - 0x300000 + j)) != data:
+                            print "verification failed "+str(hex(iAddress + j))+" "+str(hex(hexFile.getFuse(iAddress - 0x300000 + j)))[2:].zfill(2)+" do not match "+str(hex(data))[2:].zfill(2)
+                            verification = 0
+                    if verification == 0:
+                        print "\tFailed"
+                    else:
+                        print "\tSuccess"
             else:
                 print "Couldn't erase the chip."
                 sys.exit(1)
